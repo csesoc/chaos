@@ -1,9 +1,17 @@
-import React, { useState } from "react";
-import PropTypes from 'prop-types';
-import { Button, Card, CardContent, CardActions, CardMedia, Typography } from "@mui/material";
+import React from "react";
+import PropTypes from "prop-types";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardActions,
+  CardMedia,
+  Typography,
+} from "@mui/material";
 
 const CampaignCard = (props) => {
-  const { title, description, startDate, endDate, img } = props;
+  const { title, startDate, endDate, img } = props;
+  // const { title, description, startDate, endDate, img } = props;
 
   return (
     <Card sx={{ maxWidth: 275 }}>
@@ -23,16 +31,17 @@ const CampaignCard = (props) => {
       </CardContent>
       <CardActions>
         <Button size="small">Apply</Button>
-
       </CardActions>
     </Card>
   );
 };
 
 CampaignCard.propTypes = {
-  title: PropTypes.string,
-  description: PropTypes.string,
-  img: PropTypes.string,
+  title: PropTypes.string.isRequired,
+  startDate: PropTypes.string.isRequired,
+  endDate: PropTypes.string.isRequired,
+  // description: PropTypes.string.isRequired,
+  img: PropTypes.string.isRequired,
 };
 
 export default CampaignCard;
