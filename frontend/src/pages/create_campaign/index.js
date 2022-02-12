@@ -1,9 +1,19 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Container, Tabs, Tab } from "@mui/material";
 import CampaignTab from "./Campaign";
 import RolesTab from "./Roles";
 import ReviewTab from "./Preview";
 import { NextButton, ArrowIcon, NextWrapper } from "./createCampaign.styled";
+import { postCampaign } from "../../api";
+
+const dateToString = (date) =>
+  `${date.getFullYear()}-${
+    date.getMonth() < 9 ? `0${date.getMonth() + 1}` : `${date.getMonth() + 1}`
+  }-${date.getDate() < 9 ? `0${date.getDate() + 1}` : `${date.getDate() + 1}`
+  }T${date.getHours() < 9 ? `0${date.getHours()}` : `${date.getHours()}`}:${
+    date.getMinutes() < 9 ? `0${date.getMinutes()}` : `${date.getMinutes()}`
+  }:00`;
 
 // FIXME: CHAOS-66, user authentication and redirection if they are not logged in or authenticated
 const CreateCampaign = () => {
@@ -71,10 +81,57 @@ const CreateCampaign = () => {
     setTab(newTab);
   };
 
-  // FIXME: CHAOS-64, update submitHandler to account for new data
-  //        (roles/questions etc.), part of backend integration
+  // FIXME: CHAOS-66, need to use auth token + orgID so check if
+  //        user has admin permissions in the organisation
+  const { state } = useLocation();
+  const { orgID } = state;
+
   const submitHandler = async (isDraft) => {
-    console.log(`submit handler -> isDraft=${isDraft}`);
+    if (campaignName.length === 0 && !isDraft) {
+      setError("Campaign name is required");
+    } else if (description === 0 && !isDraft) {
+      setError("Campaign description is required");
+    } else if (cover === null) {
+      setError("Cover image is required");
+    } else if (startDate.getTime() > endDate.getTime()) {
+      setError("Start date must be before end date");
+    } else if (roles.length === 0 && !isDraft) {
+      setError("At least one role is required");
+    } else if (questions.length === 0 && !isDraft) {
+      setError("At least one question is required");
+    } else {
+      setError(null);
+    }
+
+    const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
+    const startTimeString = dateToString(startDate);
+    const endTimeString = dateToString(endDate);
+    const campaignSend = {
+      organisation_id: orgID,
+      campaign_name: campaignName,
+      cover_image: coverSend,
+      description,
+      starts_at: startTimeString,
+      ends_at: endTimeString,
+      is_draft: isDraft,
+    };
+    const rolesSend = roles.map((r) => ({
+      title: r.title,
+      quantity: r.quantity,
+    }));
+    const questionsSend = questions.map((q) => ({
+      text: q.text,
+      roles: [...q.roles],
+    }));
+
+    const post = await postCampaign(campaignSend, rolesSend, questionsSend);
+
+    const status = await post.status;
+    if (status === 200) {
+      console.log("nice!");
+    } else {
+      console.log("something went wrong");
+    }
   };
   return (
     <Container>

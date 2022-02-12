@@ -49,4 +49,21 @@ const getAllCampaigns = () => {
   });
 };
 
-export { authenticatedRequest, authenticate, doSignup, getAllCampaigns };
+const postCampaign = (campaign, roles, questions) =>
+  API.request({
+    method: "POST",
+    path: "/campaign/new",
+    header: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("AUTH_TOKEN")}`,
+    },
+    body: JSON.stringify({ campaign, roles, questions }),
+  });
+
+export {
+  authenticatedRequest,
+  authenticate,
+  doSignup,
+  getAllCampaigns,
+  postCampaign,
+};
