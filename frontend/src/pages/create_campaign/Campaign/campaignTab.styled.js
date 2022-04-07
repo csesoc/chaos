@@ -6,7 +6,7 @@ export const CampaignContainer = muiStyled(Container)(() => ({
   display: "flex",
   flexDirection: "column",
   width: "800px",
-  height: "600px",
+  minHeight: "600px",
 }));
 
 export const CampaignTextField = muiStyled(TextField)(() => ({

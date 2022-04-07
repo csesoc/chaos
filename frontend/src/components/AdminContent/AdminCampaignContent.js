@@ -16,7 +16,7 @@ import {
   AdminListItemButton,
 } from "./adminContent.styled";
 
-const AdminCampaignContent = ({ campaigns, setCampaigns }) => {
+const AdminCampaignContent = ({ campaigns, setCampaigns, orgID }) => {
   const navigate = useNavigate();
 
   const onDelete = (e) => {
@@ -46,7 +46,9 @@ const AdminCampaignContent = ({ campaigns, setCampaigns }) => {
         </ListItemIcon>
         <ListItemIcon>
           <IconButton>
-            <AddIcon onClick={() => navigate("/campaign/create")} />
+            <AddIcon
+              onClick={() => navigate("/campaign/create", { state: { orgID } })}
+            />
           </IconButton>
         </ListItemIcon>
       </ContentListHeader>

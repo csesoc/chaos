@@ -3,9 +3,8 @@ import { Button } from "@mui/material";
 
 export const SubmitWrapper = styled("div")`
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   margin-bottom: 50px;
-  margin-right: 20%;
 `;
 
 export const SubmitButton = styled(Button)`

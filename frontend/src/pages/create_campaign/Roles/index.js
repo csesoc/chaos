@@ -1,52 +1,32 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { v4 as uuidv4 } from "uuid";
-import {
-  ListItemText,
-  ListItemIcon,
-  IconButton,
-  Divider,
-  TextField,
-  Menu,
-  MenuItem,
-} from "@mui/material";
-import ClearIcon from "@mui/icons-material/Clear";
-import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   ContainerDiv,
   QuestionsDiv,
   RolesDisplay,
   QuestionsDisplay,
   RolesDiv,
-  RoleListItem,
-  RoleListItemButton,
   QuestionsHeader,
   SectionTitle,
   RolesListContainer,
-  RoleQuantity,
-  CreateRoleFormControl,
-  CreateRoleFormGroup,
-  CreateRoleQuantity,
-  CreateRoleName,
   AddQuestionButton,
-  SelectFromExistingButton,
-  QuestionTitle,
-  QuestionContent,
 } from "./rolesTab.styled";
+import RoleListItem from "./RoleListItem";
+import Question from "./Question";
+import SelectFromExistingMenu from "./SelectFromExistingMenu";
+import CreateRoleForm from "./CreateRoleForm";
 
-const RolesTab = (props) => {
+const RolesTab = ({ isSelected, campaignData }) => {
   const {
-    value,
-    index,
     roles,
     setRoles,
     questions,
     setQuestions,
     roleSelected,
     setRoleSelected,
-  } = props;
+  } = campaignData;
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleQty, setNewRoleQty] = useState(1);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -59,10 +39,10 @@ const RolesTab = (props) => {
     setAnchorEl(null);
   };
 
-  const selectFromExisting = (e) => {
+  const selectFromExisting = (id) => {
     // add currently selected role to set of roles related to an existing question
     const updatedQuestions = questions.map((q) =>
-      q.id === e.currentTarget.value
+      q.id === id
         ? { id: q.id, text: q.text, roles: q.roles.add(roleSelected) }
         : q
     );
@@ -82,33 +62,46 @@ const RolesTab = (props) => {
       if (newRoles.length !== 0) {
         setRoleSelected(newRoles[0].id);
       } else {
-        setRoleSelected(-1);
+        setRoleSelected("-1");
       }
     }
     setRoles(newRoles);
   };
 
   const onQuestionDelete = (e) => {
-    // Remove question from role
-    questions.forEach(
-      (q) => q.id === e.currentTarget.value && q.roles.delete(roleSelected)
+    // Remove roleSelected from question's roles.
+    // If question now relates to no roles, remove from questions.
+    setQuestions(
+      questions
+        .map((q) =>
+          q.id !== e.currentTarget.value
+            ? q
+            : {
+                id: q.id,
+                text: q.text,
+                roles: new Set([...q.roles].filter((r) => r !== roleSelected)),
+              }
+        )
+        .filter((q) => q.roles.size > 0)
     );
-    // If question relates to no roles, remove from questions
-    setQuestions(questions.filter((q) => q.roles.size > 0));
   };
 
-  const handleQuestionInput = (e, id) => {
-    const newQuestions = questions.map((q) => {
-      if (q.id === id) {
-        return { id: q.id, text: e.currentTarget.value, roles: q.roles };
-      }
-      return q;
-    });
-    setQuestions(newQuestions);
+  const handleQuestionInput = (e, targetQID) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id !== targetQID
+          ? q
+          : { id: q.id, text: e.currentTarget.value, roles: q.roles }
+      )
+    );
   };
 
   const addQuestion = () => {
-    if (roleSelected === "-1") {
+    if (questions.filter((q) => q.text === "").length) {
+      alert(
+        "Please add text to existing questions before creating a new question!"
+      );
+    } else if (roleSelected === "-1") {
       alert(
         "Please create and select one or more roles before adding questions!"
       );
@@ -123,7 +116,9 @@ const RolesTab = (props) => {
 
   const addRole = () => {
     const newID = uuidv4();
-    if (newRoleName) {
+    if (!newRoleName) {
+      alert("Role name is required!");
+    } else {
       setRoles([
         ...roles,
         {
@@ -132,166 +127,96 @@ const RolesTab = (props) => {
           quantity: newRoleQty,
         },
       ]);
-      setNewRoleName("");
-      setNewRoleQty(1);
-      if (roleSelected === -1) {
+      // if no role is selected, set roleSelected to new role
+      if (roleSelected === "-1") {
         setRoleSelected(newID);
       }
-    } else {
-      alert("Role name is required!");
+      setNewRoleName("");
+      setNewRoleQty(1);
     }
   };
 
   return (
-    <div>
-      {value.tab === index && (
-        <ContainerDiv>
-          <RolesDiv>
-            <SectionTitle>Roles</SectionTitle>
-            <RolesDisplay>
-              <RolesListContainer>
-                {roles.map((r) => (
-                  <>
-                    <RoleListItem selected={r.id === roleSelected}>
-                      <RoleListItemButton onClick={() => setRoleSelected(r.id)}>
-                        <RoleQuantity>{r.quantity}</RoleQuantity>
-                        <ListItemText>{r.title}</ListItemText>
-                        <ListItemIcon>
-                          <IconButton>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </ListItemIcon>
-                        <ListItemIcon>
-                          <IconButton
-                            value={r.id}
-                            onClick={(e) => {
-                              onRoleDelete(e);
-                            }}
-                          >
-                            <ClearIcon />
-                          </IconButton>
-                        </ListItemIcon>
-                      </RoleListItemButton>
-                    </RoleListItem>
-                    <Divider />
-                  </>
-                ))}
-              </RolesListContainer>
-              <CreateRoleFormControl>
-                <CreateRoleFormGroup row>
-                  <CreateRoleQuantity
-                    type="number"
-                    value={newRoleQty}
-                    onChange={(e) => setNewRoleQty(e.target.value)}
-                    min={1}
-                  />
-                  <CreateRoleName
-                    type="text"
-                    value={newRoleName}
-                    onChange={(e) => setNewRoleName(e.currentTarget.value)}
-                  />
-                  <IconButton onClick={addRole}>
-                    <AddIcon />
-                  </IconButton>
-                </CreateRoleFormGroup>
-              </CreateRoleFormControl>
-            </RolesDisplay>
-          </RolesDiv>
-          <QuestionsDiv>
-            <SectionTitle>Questions</SectionTitle>
-            <QuestionsHeader>
-              <AddQuestionButton onClick={addQuestion} variant="outlined">
-                Add Question
-                <AddIcon fontSize="small" />
-              </AddQuestionButton>
-              <SelectFromExistingButton
-                variant="outlined"
-                aria-controls={open ? "basic-menu" : undefined}
-                aria-haspopup="true"
-                aria-expanded={open ? "true" : undefined}
-                onClick={handleSelectFromExistingClick}
-              >
-                Select From Existing
-                <ExpandMoreIcon fontSize="small" />
-              </SelectFromExistingButton>
-              <Menu
-                id="basic-menu"
-                anchorEl={anchorEl}
-                open={open}
-                onClose={handleCloseSelectFromExisting}
-              >
-                {filteredQuestions.length > 0 ? (
-                  filteredQuestions.map((q) => (
-                    <MenuItem
-                      value={q.id}
-                      onClick={(e) => selectFromExisting(e)}
-                    >
-                      {q.text}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem onClick={handleCloseSelectFromExisting}>
-                    No existing questions to select from
-                  </MenuItem>
-                )}
-              </Menu>
-            </QuestionsHeader>
-            <QuestionsDisplay>
-              {questions
-                .filter((q) => q.roles.has(roleSelected))
-                .map((q, idx) => (
-                  <>
-                    <QuestionTitle>Question {idx + 1}</QuestionTitle>
-                    <QuestionContent>
-                      <TextField
-                        fullWidth
-                        multiline
-                        required
-                        value={q.text}
-                        onChange={(e) => {
-                          handleQuestionInput(e, q.id);
-                        }}
-                      />
-                      <IconButton
-                        value={q.id}
-                        onClick={(e) => {
-                          onQuestionDelete(e);
-                        }}
-                      >
-                        <ClearIcon />
-                      </IconButton>
-                    </QuestionContent>
-                  </>
-                ))}
-            </QuestionsDisplay>
-          </QuestionsDiv>
-        </ContainerDiv>
-      )}
-    </div>
+    isSelected && (
+      <ContainerDiv>
+        <RolesDiv>
+          <SectionTitle>Roles</SectionTitle>
+          <RolesDisplay>
+            <RolesListContainer>
+              {roles.map((r) => (
+                <RoleListItem
+                  role={r}
+                  roleSelected={roleSelected}
+                  setRoleSelected={setRoleSelected}
+                  onRoleDelete={onRoleDelete}
+                />
+              ))}
+            </RolesListContainer>
+            <CreateRoleForm
+              newRoleQty={newRoleQty}
+              setNewRoleQty={setNewRoleQty}
+              newRoleName={newRoleName}
+              setNewRoleName={setNewRoleName}
+              addRole={addRole}
+            />
+          </RolesDisplay>
+        </RolesDiv>
+        <QuestionsDiv>
+          <SectionTitle>Questions</SectionTitle>
+          <QuestionsHeader>
+            <AddQuestionButton onClick={addQuestion} variant="outlined">
+              Add Question
+              <AddIcon fontSize="small" />
+            </AddQuestionButton>
+            <SelectFromExistingMenu
+              filteredQuestions={filteredQuestions}
+              selectFromExisting={selectFromExisting}
+              open={open}
+              handleSelectFromExistingClick={handleSelectFromExistingClick}
+              handleCloseSelectFromExisting={handleCloseSelectFromExisting}
+              anchorEl={anchorEl}
+            />
+          </QuestionsHeader>
+          <QuestionsDisplay>
+            {questions
+              .filter((q) => q.roles.has(roleSelected))
+              .map((q, idx) => (
+                <Question
+                  idx={idx}
+                  question={q}
+                  handleQuestionInput={handleQuestionInput}
+                  onQuestionDelete={onQuestionDelete}
+                />
+              ))}
+          </QuestionsDisplay>
+        </QuestionsDiv>
+      </ContainerDiv>
+    )
   );
 };
 
 RolesTab.propTypes = {
-  value: PropTypes.number.isRequired,
-  index: PropTypes.number.isRequired,
-  questions: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      text: PropTypes.string.isRequired,
-      roles: PropTypes.objectOf(PropTypes.string).isRequired,
-    })
-  ).isRequired,
-  setQuestions: PropTypes.func.isRequired,
-  roles: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      quantity: PropTypes.number.isRequired,
-    })
-  ).isRequired,
-  setRoles: PropTypes.func.isRequired,
-  roleSelected: PropTypes.string.isRequired,
-  setRoleSelected: PropTypes.func.isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  campaignData: PropTypes.shape({
+    questions: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        text: PropTypes.string.isRequired,
+        roles: PropTypes.objectOf(PropTypes.string).isRequired,
+      })
+    ).isRequired,
+    setQuestions: PropTypes.func.isRequired,
+    roles: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        quantity: PropTypes.number.isRequired,
+      })
+    ).isRequired,
+    setRoles: PropTypes.func.isRequired,
+    roleSelected: PropTypes.string.isRequired,
+    setRoleSelected: PropTypes.func.isRequired,
+  }).isRequired,
 };
 
 export default RolesTab;

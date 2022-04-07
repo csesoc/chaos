@@ -1,9 +1,19 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Container, Tabs, Tab } from "@mui/material";
 import CampaignTab from "./Campaign";
 import RolesTab from "./Roles";
-import CampaignReview from "./Preview";
+import ReviewTab from "./Preview";
 import { NextButton, ArrowIcon, NextWrapper } from "./createCampaign.styled";
+
+const dateToString = (date) =>
+  `${date.getFullYear()}-${
+    date.getMonth() < 9 ? `0${date.getMonth() + 1}` : `${date.getMonth() + 1}`
+  }-${
+    date.getDate() < 9 ? `0${date.getDate() + 1}` : `${date.getDate() + 1}`
+  }T${date.getHours() < 9 ? `0${date.getHours()}` : `${date.getHours()}`}:${
+    date.getMinutes() < 9 ? `0${date.getMinutes()}` : `${date.getMinutes()}`
+  }:00`;
 
 // FIXME: CHAOS-66, user authentication and redirection if they are not logged in or authenticated
 const CreateCampaign = () => {
@@ -14,7 +24,6 @@ const CreateCampaign = () => {
   const [description, setDescription] = useState("");
   const [interviewStage, setInterviewStage] = useState(false);
   const [scoringStage, setScoringStage] = useState(false);
-  const [draft, setDraft] = useState(false);
   const [cover, setCover] = useState(null);
   const [error, setError] = useState(null);
   const [roles, setRoles] = useState([]);
@@ -22,6 +31,33 @@ const CreateCampaign = () => {
     roles.length > 0 ? roles[0].id : "-1"
   );
   const [questions, setQuestions] = useState([]);
+  const campaignData = {
+    tab,
+    setTab,
+    campaignName,
+    setCampaignName,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    description,
+    setDescription,
+    interviewStage,
+    setInterviewStage,
+    scoringStage,
+    setScoringStage,
+    cover,
+    setCover,
+    error,
+    setError,
+    roles,
+    setRoles,
+    roleSelected,
+    setRoleSelected,
+    questions,
+    setQuestions,
+  };
+
   const onTabChange = (val) => {
     // only allow user to access review/publish tab if all inputs are non-empty
     if (val === 2) {
@@ -39,57 +75,32 @@ const CreateCampaign = () => {
     setTab(val);
   };
 
+  // FIXME: USEEFFECT TO INIT ORG_ID ON PAGE LOAD, REDIRECT AS PART
+  //        OF AUTH THINGY
+  const { state } = useLocation();
+  const { orgID } = state;
   // FIXME: CHAOS-64, update submitHandler to account for new data
   //        (roles/questions etc.), part of backend integration
   const submitHandler = async (isDraft) => {
-    console.log(`submit handler -> isDraft=${isDraft}`);
-    /*
-    if (campaignName.length === 0 && !draft) {
+    if (campaignName.length === 0 && !isDraft) {
       setError("Campaign name is required");
-    } else if (description === 0 && !draft) {
+    } else if (description === 0 && !isDraft) {
       setError("Campaign description is required");
     } else if (startDate.getTime() > endDate.getTime()) {
       setError("Start date must be before end date");
+    } else if (roles.length === 0 && !isDraft) {
+      setError("At least one role is required");
+    } else if (questions.length === 0 && !isDraft) {
+      setError("At least one question is required");
     } else {
       setError(null);
     }
 
     const coverSend = cover ? cover.slice(cover.indexOf(";base64,") + 8) : "";
-    const startTimeString = `${startDate.getFullYear()}-${
-      startDate.getMonth() < 9
-        ? `0${startDate.getMonth() + 1}`
-        : `${startDate.getMonth() + 1}`
-    }-${
-      startDate.getDate() < 9
-        ? `0${startDate.getDate() + 1}`
-        : `${startDate.getDate() + 1}`
-    }T${
-      startDate.getHours() < 9
-        ? `0${startDate.getHours()}`
-        : `${startDate.getHours()}`
-    }:${
-      startDate.getMinutes() < 9
-        ? `0${startDate.getMinutes()}`
-        : `${startDate.getMinutes()}`
-    }:00`;
-    const endTimeString = `${endDate.getFullYear()}-${
-      endDate.getMonth() < 9
-        ? `0${endDate.getMonth() + 1}`
-        : `${endDate.getMonth() + 1}`
-    }-${
-      endDate.getDate() < 9
-        ? `0${endDate.getDate() + 1}`
-        : `${endDate.getDate() + 1}`
-    }T${
-      endDate.getHours() < 9
-        ? `0${endDate.getHours()}`
-        : `${endDate.getHours()}`
-    }:${
-      endDate.getMinutes() < 9
-        ? `0${endDate.getMinutes()}`
-        : `${endDate.getMinutes()}`
-    }:00`;
+    const startTimeString = dateToString(startDate);
+    const endTimeString = dateToString(endDate);
 
+    // FIXME: change to correct route once it exists
     const postCampaign = await fetch("http://127.0.0.1:8000/campaign/new", {
       method: "POST",
       headers: {
@@ -97,14 +108,20 @@ const CreateCampaign = () => {
       },
       body: JSON.stringify({
         // TODO: replace organisation id with something in the frontend that returns the id, would necessitate an endpoint to get all orgs the  user is a part of
-        organisation_id: 1,
-        campaignName,
-        description,
-        starts_at: startTimeString,
-        ends_at: endTimeString,
-        draft,
-        // draft now means that it is an actual draft
-        cover_image: coverSend,
+        organisation: {
+          organisation_id: orgID,
+          campaignName,
+          description,
+          starts_at: startTimeString,
+          ends_at: endTimeString,
+          isDraft,
+          cover_image: coverSend,
+        },
+        roles: roles.map((r) => ({ title: r.title, quantity: r.quantity })),
+        questions: questions.map((q) => ({
+          text: q.text,
+          roles: [...q.roles],
+        })),
       }),
     });
 
@@ -114,7 +131,6 @@ const CreateCampaign = () => {
     } else {
       console.log("something fucked up");
     }
-    */
   };
   return (
     <Container>
@@ -128,46 +144,11 @@ const CreateCampaign = () => {
         <Tab label="roles" />
         <Tab label="review" />
       </Tabs>
-      <CampaignTab
-        value={{ tab }}
-        index={0}
-        campaignName={campaignName}
-        setCampaignName={setCampaignName}
-        startDate={startDate}
-        setStartDate={setStartDate}
-        endDate={endDate}
-        setEndDate={setEndDate}
-        description={description}
-        setDescription={setDescription}
-        interviewStage={interviewStage}
-        setInterviewStage={setInterviewStage}
-        scoringStage={scoringStage}
-        setScoringStage={setScoringStage}
-        draft={draft}
-        setDraft={setDraft}
-        cover={cover}
-        setCover={setCover}
-        error={error}
-        setError={setError}
-      />
-      <RolesTab
-        value={{ tab }}
-        index={1}
-        roles={roles}
-        setRoles={setRoles}
-        questions={questions}
-        setQuestions={setQuestions}
-        roleSelected={roleSelected}
-        setRoleSelected={setRoleSelected}
-      />
-      <CampaignReview
-        value={{ tab }}
-        index={2}
-        questions={questions}
-        roles={roles}
-        campaignName={campaignName}
-        headerImage={cover}
-        description={description}
+      <CampaignTab isSelected={tab === 0} campaignData={campaignData} />
+      <RolesTab isSelected={tab === 1} campaignData={campaignData} />
+      <ReviewTab
+        isSelected={tab === 2}
+        campaign={campaignData}
         onSubmit={submitHandler}
       />
       {(tab === 0 || tab === 1) && (
@@ -175,7 +156,7 @@ const CreateCampaign = () => {
           <NextButton
             variant="contained"
             onClick={() => {
-              setTab(tab + 1);
+              onTabChange(tab + 1);
             }}
           >
             Next

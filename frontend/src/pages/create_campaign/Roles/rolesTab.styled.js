@@ -10,8 +10,8 @@ import {
 
 export const ContainerDiv = styled("div")`
   display: flex;
-  height: 100%;
-  width: "100%";
+  justify-content: center;
+  flex-wrap: wrap;
 `;
 
 export const RolesDiv = styled("div")`
@@ -19,7 +19,9 @@ export const RolesDiv = styled("div")`
   flex-direction: column;
   align-items: center;
   height: 600px;
-  width: 700px;
+  width: 40%;
+  min-width: 400px;
+  float: left;
 `;
 
 export const SectionTitle = styled("h2")`
@@ -47,7 +49,7 @@ export const RolesListContainer = styled("div")`
   overflow: scroll;
 `;
 
-export const RoleListItem = styled(ListItem)`
+export const RoleListItemContent = styled(ListItem)`
   padding: 0px;
   height: 70px;
 `;
@@ -103,7 +105,8 @@ export const QuestionsDiv = styled("div")`
   flex-direction: column;
   align-items: center;
   height: 600px;
-  width: 1000px;
+  width: 60%;
+  min-width: 400px;
 `;
 
 export const QuestionsHeader = styled(ListItem)`

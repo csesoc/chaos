@@ -1,29 +1,40 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { SubmitButton, SubmitWrapper } from "./campaignPreview.styled";
+import { Grid } from "@mui/material";
+import { SubmitButton, SubmitWrapper } from "./reviewTab.styled";
 import ApplicationForm from "../../../components/ApplicationForm";
+import CampaignCard from "../../../components/CampaignCard";
 
 // FIXME: CHAOS-65, add campaign card to preview tab
-const CampaignReview = (props) => {
+const ReviewTab = ({ isSelected, campaign, onSubmit }) => {
   const {
-    value,
-    index,
     questions,
     roles,
     campaignName,
-    headerImage,
+    cover,
     description,
-    onSubmit,
-  } = props;
+    startDate,
+    endDate,
+  } = campaign;
   const [rolesSelected, setRolesSelected] = useState([]);
   const [answers, setAnswers] = useState({});
   useEffect(() => {
+    const newAnswers = questions.map((q) => {
+      const tmp = {};
+      if (!(q.id in answers)) {
+        tmp[q.id] = "";
+      } else {
+        tmp[q.id] = answers[q.id];
+      }
+      return tmp;
+    });
     questions.forEach((q) => {
       if (!(q.id in answers)) {
-        answers[q.id] = "";
+        newAnswers[q.id] = "";
       }
     });
-    setAnswers(answers);
+    setAnswers(newAnswers);
+    console.log(answers);
   }, [questions]);
 
   const dummyUserInfo = {
@@ -32,10 +43,46 @@ const CampaignReview = (props) => {
     email: "firstlast@gmail.com",
     degree: "Bachelor of Science (Computer Science)",
   };
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   return (
-    value.tab === index && (
+    isSelected && (
       <>
+        <div style={{display: "flex", backgroundColor:"#e2e6ed", padding:"3%", flexDirection: "column"}}>
+          <text style={{textAlign:"center", padding:"5px"}}>
+            Please Review both the application card and form before publishing. This is
+            how your campaign will appear to applicants.
+          </text>
+          <text style={{textAlign:"center", padding: "5px"}}>
+            Click "apply" to view the application form.
+          </text>
+        </div>
+        <Grid container spacing={2} columns={4} style={{paddingTop:"30px"}}>
+          <Grid item xs={1.5}></Grid>
+          <Grid item key={campaignName} xs={1}>
+            <CampaignCard
+              title={campaignName}
+              appliedFor={[]}
+              positions={roles.map((r) => ({ number: r.quantity, name: r.title }))}
+              startDate={`${startDate.getDate()} ${months[startDate.getMonth()]} ${startDate.getFullYear()}`}
+              endDate={`${endDate.getDate()} ${months[endDate.getMonth()]} ${endDate.getFullYear()}`}
+              img={cover}
+            />
+          </Grid>
+        </Grid>
         <ApplicationForm
           questions={questions}
           roles={roles}
@@ -44,7 +91,7 @@ const CampaignReview = (props) => {
           answers={answers}
           setAnswers={setAnswers}
           campaignName={campaignName}
-          headerImage={headerImage}
+          headerImage={cover}
           description={description}
           userInfo={dummyUserInfo}
         />
@@ -61,27 +108,29 @@ const CampaignReview = (props) => {
   );
 };
 
-CampaignReview.propTypes = {
-  value: PropTypes.number.isRequired,
-  index: PropTypes.number.isRequired,
-  questions: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      text: PropTypes.string.isRequired,
-      roles: PropTypes.objectOf(PropTypes.string).isRequired,
-    })
-  ).isRequired,
-  roles: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-      quantity: PropTypes.number.isRequired,
-    })
-  ).isRequired,
-  campaignName: PropTypes.string.isRequired,
-  headerImage: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
+ReviewTab.propTypes = {
+  isSelected: PropTypes.bool.isRequired,
+  campaign: PropTypes.shape({
+    questions: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        text: PropTypes.string.isRequired,
+        roles: PropTypes.objectOf(PropTypes.string).isRequired,
+      })
+    ).isRequired,
+    roles: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
+        quantity: PropTypes.number.isRequired,
+      })
+    ).isRequired,
+    campaignName: PropTypes.string.isRequired,
+    cover: PropTypes.string.isRequired,
+    description: PropTypes.string.isRequired,
+    onSubmit: PropTypes.func.isRequired,
+  }).isRequired,
   onSubmit: PropTypes.func.isRequired,
 };
 
-export default CampaignReview;
+export default ReviewTab;
