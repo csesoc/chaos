@@ -130,7 +130,7 @@ async fn get_access_token(oauth_code: &str, state: &State<ApiState>) -> Option<S
         .await
         .ok()?;
 
-    match serde_json::from_value::<TokenResponse>(token_json.clone()) {
+    match TokenResponse::deserialize(&token_json) {
         Ok(t) => Some(t.access_token),
         Err(e) => {
             eprintln!(
