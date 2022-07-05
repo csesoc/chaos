@@ -62,6 +62,7 @@ async fn main() {
                 backend::organisation::is_admin,
                 backend::organisation::get_from_ids,
                 backend::organisation::invite_uid,
+                backend::organisation::invite_email,
             ],
         )
         .mount(
@@ -75,6 +76,7 @@ async fn main() {
                 backend::campaigns::update,
                 backend::campaigns::roles,
                 backend::campaigns::create,
+                backend::campaigns::new,
                 backend::campaigns::delete_campaign,
                 backend::campaigns::get_all_campaigns,
             ],
@@ -95,6 +97,7 @@ async fn main() {
                 backend::application::submit_answer,
                 backend::application::get_answers,
                 backend::application::get_ratings,
+                backend::application::set_status,
             ],
         )
         .mount(
